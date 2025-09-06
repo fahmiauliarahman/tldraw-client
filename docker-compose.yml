@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  # Production build of the tldraw client
+  tldraw-client:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3046:3046"
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    depends_on:
+      - y-websocket
+    networks:
+      - tldraw-network
+
+  # Y-websocket server for real-time collaboration
+  y-websocket:
+    image: node:22-alpine
+    working_dir: /app
+    command: sh -c "npm install -g y-websocket && y-websocket"
+    ports:
+      - "1234:1234"
+    environment:
+      - PORT=1234
+      - HOST=0.0.0.0
+    restart: unless-stopped
+    networks:
+      - tldraw-network
+    volumes:
+      - websocket_data:/app/data
+
+  # Development server (optional - use with docker-compose -f docker-compose.yml -f docker-compose.dev.yml up)
+  tldraw-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      target: development
+    ports:
+      - "5173:5173"
+    environment:
+      - NODE_ENV=development
+      - VITE_HOST=0.0.0.0
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      - y-websocket
+    networks:
+      - tldraw-network
+    profiles:
+      - dev
+
+networks:
+  tldraw-network:
+    driver: bridge
+
+volumes:
+  websocket_data:
+    driver: local

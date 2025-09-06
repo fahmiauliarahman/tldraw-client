@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  # Override for development
+  tldraw-dev:
+    profiles: [] # Remove the dev profile to make it active by default when using this file
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "5173:5173"
+    environment:
+      - NODE_ENV=development
+      - VITE_HOST=0.0.0.0
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      - y-websocket
+    networks:
+      - tldraw-network
+
+  # Disable production client when in dev mode
+  tldraw-client:
+    profiles:
+      - production
